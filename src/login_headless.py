@@ -34,9 +34,7 @@ def setup_driver(headless=True):
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.5481.178 Safari/537.36"
     )
 
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()), options=options
-    )
+    driver = webdriver.Chrome(service=Service(), options=options)
     return driver
 
 
