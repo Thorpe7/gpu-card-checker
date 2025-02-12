@@ -52,7 +52,7 @@ if __name__ == "__main__":
         product_id=args.product_id,
         cart_url=args.cart_url,
         cvv_num=args.cvv,
-        check_interval=CHECK_INTERVAL,
+        check_interval=10,
         headless=True,
         dry_run=args.dry_run,
     )

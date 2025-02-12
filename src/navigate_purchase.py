@@ -25,38 +25,63 @@ def check_availability(product_url):
     return add_to_cart_btn is not None  # Returns True if item is available
 
 
-def add_to_cart(driver, product_url, cart_url, sku_id, open_browser):
-    """Adds product of interest to your cart."""
+import time
+import logging
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+log = logging.getLogger(__name__)
+
+
+def add_to_cart(driver, product_url, cart_url, sku_id):
+    """Adds a product to the cart and waits for queue processing."""
+    log.info(f"🚀 Navigating to product page: {product_url}")
     driver.get(product_url)
-    time.sleep(1)
+    time.sleep(2)  # Allow page to load
+
     try:
-        # sku id for locating 'add to cart'
-        add_to_cart_btn = driver.find_element(
-            By.XPATH,
-            f"//button[@data-sku-id='{sku_id}' and contains(@data-button-state, 'ADD_TO_CART')]",
+        log.info("🔍 Checking for 'Add to Cart' button...")
+        add_to_cart_btn = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable(
+                (
+                    By.XPATH,
+                    f"//button[@data-sku-id='{sku_id}' and contains(@data-button-state, 'ADD_TO_CART')]",
+                )
+            )
         )
         add_to_cart_btn.click()
-        log.info("🛒 Successfully added item to Cart!")
+        log.info("🛒 Clicked 'Add to Cart'!")
 
-        time.sleep(1)
+        # Wait on the page to check if we enter a queue
+        log.info("⏳ Waiting for cart processing...")
+
+        queue_timeout = 120  # Maximum wait time in seconds
+        start_time = time.time()
+
+        while time.time() - start_time < queue_timeout:
+            time.sleep(5)  # Avoid excessive requests
+            if "Your item has been added to cart" in driver.page_source:
+                log.info("✅ Item successfully added to cart!")
+                break
+            elif "You're in line" in driver.page_source:
+                log.info("⏳ Still in queue, waiting...")
+            else:
+                log.info("🔄 Checking cart status...")
+                driver.refresh()  # Refresh to check if queue clears
+
+        # Navigate to cart and confirm item is there
+        log.info("🛒 Navigating to cart to confirm...")
         driver.get(cart_url)
+        time.sleep(3)
 
-        # Check if item is in the cart
-        time.sleep(1)
-        if "Your Cart is Empty" not in driver.page_source:
-            log.info("✅ Item is in cart! Opening browser for checkout...")
-            if open_browser:  # Enable if you want bot to open your cart before purchase
-                webbrowser.open(cart_url)
-            return True
-        else:
-            log.info("❌ Item not in cart. Retrying...")
+        if "Your Cart is Empty" in driver.page_source:
+            log.info("❌ Item not in cart. It may have sold out.")
             return False
+        else:
+            log.info("✅ Item is in cart! Ready for checkout.")
+            return True
 
     except Exception as e:
-        # Check if "Sold Out" message exists
-        if "Sold Out" in driver.page_source:
-            log.info("⚠️ Item is out of stock!")
-        else:
-            log.info("❌ Could not find 'Add to Cart' button!")
-
+        log.error(f"❌ Error during add to cart: {e}")
         return False
