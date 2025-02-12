@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "gpu-card-checker"
+version = "0.1.0"
+description = "Project for learning more about web scraping."
+authors = ["Maxwell Thorpe"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+selenium = "^4.28.1"
+requests = "^2.32.3"
+undetected-chromedriver = "^3.5.5"
+webdriver-manager = "^4.0.2"
+bs4 = "^0.0.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

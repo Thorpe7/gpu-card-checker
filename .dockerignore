@@ -1,0 +1,8 @@
+**
+!pyproject.toml
+!src/
+!run.py
+!README.md
+!requirements.txt
+!.vscode
+**/__pycache__

@@ -1,8 +1,8 @@
 """Continuously check for item availability and add to cart when possible."""
 
-import os
 import time
 import logging
+import argparse
 
 from src.login_headless import setup_driver, cookie_login
 from src.navigate_purchase import check_availability, add_to_cart
@@ -12,15 +12,17 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+CHECK_INTERVAL = 50
 
-def main(product_url, cart_url, product_id, cvv_num, check_interval, headless):
+
+def main(product_url, cart_url, product_id, cvv_num, check_interval, headless, dry_run):
     driver = setup_driver(headless=headless)
     driver = cookie_login(driver)
     while True:
         if check_availability(product_url):
             if add_to_cart(driver, product_url, cart_url, product_id, False):
                 logging.info("🎉 Success! Item is in your cart. Checkout now.")
-                if proceed_to_checkout(driver, cart_url, cvv_num, dry_run=True):
+                if proceed_to_checkout(driver, cart_url, cvv_num, dry_run=dry_run):
                     break  # Stop checking if item is successfully added
                 else:
                     logging.info("❌ Purchase failed.")
@@ -35,11 +37,22 @@ def main(product_url, cart_url, product_id, cvv_num, check_interval, headless):
 
 if __name__ == "__main__":
 
-    TEST_URL = "https://www.bestbuy.com/site/msi-nvidia-geforce-rtx-4060-8gb-ventus-2x-oc-8gb-gddr6-pci-express-4-0-graphics-card-black/6548653.p?skuId=6548653"
-    TEST_ID = "6548653"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("product_url", type=str, help="URL of the product.")
+    parser.add_argument("product_id", type=str, help="The SKU ID for the product.")
+    parser.add_argument("cart_url", type=str, help="The URL to your cart.")
+    parser.add_argument(
+        "--cvv", type=str, help="CVV for your stored payment information"
+    )
+    parser.add_argument("--dry-run", action="store_true", help="Enable dry-run mode.")
 
-    product_id = "6614151"
-    product_url = "https://www.bestbuy.com/site/nvidia-geforce-rtx-5090-32gb-gddr7-graphics-card-dark-gun-metal/6614151.p?skuId=6614151"
-    cart_url = "https://www.bestbuy.com/cart"
-    check_interval = 50
-    main(product_url, cart_url, product_id, "123", check_interval, headless=True)
+    args = parser.parse_args()
+    main(
+        product_url=args.product_url,
+        product_id=args.product_id,
+        cart_url=args.cart_url,
+        cvv_num=args.cvv,
+        check_interval=10,
+        headless=True,
+        dry_run=args.dry_run,
+    )
